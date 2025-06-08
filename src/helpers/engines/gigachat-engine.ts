@@ -11,6 +11,7 @@ import { stripRegexPatterns } from '../strip-regex-patterns';
 import { logger } from '../logger';
 import { EngineConfig } from './config-engine';
 import { EngineApi, ChatMessage } from './engine-api';
+import { commandName } from '../constants';
 
 const explainInSecondRequest = true;
 
@@ -333,6 +334,12 @@ export async function getModels(
 export function createGigaChatEngine(
   engineConfig: EngineConfig
 ): EngineApi {
+  if (!engineConfig.apiKey) {
+    throw new KnownError(
+      `Please set your GigaChat API key via \`${commandName} config set GIGACHAT_KEY=<your token>\`` // TODO: i18n
+    );
+  }
+
   return {
     async getScriptAndInfo(params: { prompt: string }) {
       return getScriptAndInfo({ ...params, engineConfig });

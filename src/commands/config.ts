@@ -52,7 +52,11 @@ export default command(
 
       if (mode === 'set') {
         await setConfigs(
-          keyValues.map((keyValue) => keyValue.split('=') as [string, string])
+          keyValues.map((keyValue) => {
+            const index = keyValue.indexOf('=');
+            if (index === -1) throw new KnownError(`${i18n.t('Invalid format')}: ${keyValue}`);
+            return [keyValue.slice(0, index), keyValue.slice(index + 1)] as [string, string];
+          })
         );
         return;
       }

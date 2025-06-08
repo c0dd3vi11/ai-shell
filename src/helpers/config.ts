@@ -3,7 +3,6 @@ import path from 'path';
 import os from 'os';
 import ini from 'ini';
 import type { TiktokenModel } from '@dqbd/tiktoken';
-import { commandName } from './constants';
 import { KnownError, handleCliError } from './error';
 import * as p from '@clack/prompts';
 import { red } from 'kolorist';
@@ -11,6 +10,7 @@ import i18n from './i18n';
 import { logger } from './logger';
 import { EngineConfig, EngineType } from './engines/config-engine';
 import { createEngine } from './engines/engine-factory';
+import md5 from 'md5';
 
 const { hasOwnProperty } = Object.prototype;
 export const hasOwn = (object: unknown, key: PropertyKey) =>
@@ -38,13 +38,7 @@ const configParsers = {
   },
 
   OPENAI_KEY(key?: string) {
-    if (!key) {
-      throw new KnownError(
-        `Please set your OpenAI API key via \`${commandName} config set OPENAI_KEY=<your token>\`` // TODO: i18n
-      );
-    }
-
-    return key;
+    return key || '';
   },
   OPENAI_MODEL(model?: string) {
     if (!model || model.length === 0) {
@@ -61,13 +55,7 @@ const configParsers = {
   },
 
   GIGACHAT_KEY(key?: string) {
-    if (!key) {
-      throw new KnownError(
-        `Please set your GigaChat API key via \`${commandName} config set GIGACHAT_KEY=<your token>\`` // TODO: i18n
-      );
-    }
-
-    return key;
+    return key || '';
   },
   GIGACHAT_MODEL(model?: string) {
     if (!model || model.length === 0) {
@@ -167,6 +155,9 @@ export function getEngineConfig(
   }
 }
 
+function obfuscateKey(key: string) {
+  return `{ tail(-3): '${key.slice(-3)}', md5: ${md5(key)}, len: ${key.length} }`;
+}
 
 export const setConfigs = async (keyValues: [key: string, value: string][]) => {
   const config = await readConfigFile();
@@ -201,7 +192,7 @@ export const showConfigUI = async () => {
           value: 'OPENAI_KEY',
           hint: hasOwn(config, 'OPENAI_KEY')
             ? // Obfuscate the key
-              'sk-...' + config.OPENAI_KEY.slice(-3)
+              obfuscateKey(config.OPENAI_KEY)
             : i18n.t('(not set)'),
         },
         {
@@ -229,7 +220,7 @@ export const showConfigUI = async () => {
           value: 'GIGACHAT_KEY',
           hint: hasOwn(config, 'GIGACHAT_KEY')
             ? // Obfuscate the key
-              'Bearer-...' + config.GIGACHAT_KEY.slice(-3)
+              obfuscateKey(config.GIGACHAT_KEY)
             : i18n.t('(not set)'),
         },
         {

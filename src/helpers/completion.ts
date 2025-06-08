@@ -19,6 +19,7 @@ import { ProxyAgent } from 'proxy-agent';
 import { logger } from './logger';
 import { EngineConfig } from './engines/config-engine';
 import { EngineApi, ChatMessage } from './engines/engine-api';
+import { commandName } from './constants';
 
 const explainInSecondRequest = true;
 
@@ -355,6 +356,12 @@ export async function getModels(
 export function createOpenAiEngine(
   engineConfig: EngineConfig,
 ): EngineApi {
+  if (!engineConfig.apiKey) {
+    throw new KnownError(
+      `Please set your OpenAI API key via \`${commandName} config set OPENAI_KEY=<your token>\`` // TODO: i18n
+    );
+  }
+
   return {
     async getScriptAndInfo(params: { prompt: string }) {
       return await getScriptAndInfo({
